@@ -19,7 +19,7 @@ A Telegram bot that monitors websites and notifies you of their status.
 To deploy this project run
 
 ```bash
-  git clone https://github.com/irymee/UptimeRobot.gitUp
+  git clone https://github.com/irymee/UptimeRobot.git
   cd UptimeRobot
   pip install -r requirements.txt
   python3 bot.py
