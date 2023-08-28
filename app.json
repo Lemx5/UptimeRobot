@@ -1,0 +1,24 @@
+{
+    "name": "Uptime Monitoring Telegram Bot",
+    "description": "A Telegram bot that monitors websites and notifies users of their status.",
+    "repository": "https://github.com/irymee/UptimeRobot",
+    "env": {
+      "API_ID": {
+        "description": "Your Telegram API ID",
+        "required": true
+      },
+      "API_HASH": {
+        "description": "Your Telegram API HASH",
+        "required": true
+      },
+      "BOT_TOKEN": {
+        "description": "Your Telegram Bot Token",
+        "required": true
+      },
+      "DB_URI": {
+        "description": "Your MongoDB URI",
+        "required": true
+      }
+    }
+  }
+  
