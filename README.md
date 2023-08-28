@@ -14,7 +14,7 @@ A Telegram bot that monitors websites and notifies you of their status.
 
 ## Deployment
 
-### VPS
+### VPS Deployment:
 
 To deploy this project run
 
@@ -34,13 +34,13 @@ docker run -e API_ID='your_value' -e API_HASH='your_value' -e BOT_TOKEN='your_va
 ```
 
 
-### Render
+### Render Deployment:
 - Push the bot to a GitHub repository.
 - Set up a new service on Render and link to the repository.
 - Define environment variables (`API_ID`, `API_HASH`, `BOT_TOKEN`, `DB_URI`) on the Render dashboard.
 - Deploy!
 
-## Heroku Deployment:
+### Heroku Deployment:
 You can easily deploy the bot to Heroku with the following steps:
 
 1. **Fork the Repository**: Start by forking this repository to your GitHub account.
