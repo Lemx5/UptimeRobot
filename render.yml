@@ -4,12 +4,3 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python bot.py
-    envVars:
-      - key: API_ID
-        fromShell: echo $API_ID
-      - key: API_HASH
-        fromShell: echo $API_HASH
-      - key: BOT_TOKEN
-        fromShell: echo $BOT_TOKEN
-      - key: DB_URI
-        fromShell: echo $DB_URI
