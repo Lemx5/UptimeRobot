@@ -2,7 +2,7 @@ import datetime
 import asyncio
 import aiohttp
 from motor.motor_asyncio import AsyncIOMotorClient
-from pyrogram import Client, filters
+from pyrogram import Client, filters, enums
 from quart import Quart, jsonify, request
 import os
 
@@ -115,11 +115,12 @@ async def show_status(client, message):
         status_icon = "🟢" if document['status'] else "🔴"
         friendly_name = document['friendly_name']
         status_text = "up" if document['status'] else "down"
-
-        link = f'<a href="{document["url"]}">{friendly_name}</a>'
+        
+        link = f'[{friendly_name}]({document["url"]})'
         msg += f"{status_icon} {link} ({status_text}) (Last checked: {last_checked})\n"
+    
+    await message.reply(msg, parse_mode = enums.ParseMode.MARKDOWN)
 
-    await message.reply(msg, parse_mode="html")
 
 
 @app.on_message(filters.command("notify") & filters.private)
