@@ -49,6 +49,16 @@ async def monitor_websites():
                         {"url": document["url"], "chat_id": document["chat_id"]},
                         {"$set": {"status": status, "last_checked": datetime.datetime.utcnow()}}
                     )
+                    
+                    # Add history to the database
+                    history_entry = {
+                        "timestamp": datetime.datetime.utcnow(),
+                        "status": status
+                    }
+                    await collection.update_one(
+                        {"url": document["url"], "chat_id": document["chat_id"]},
+                        {"$push": {"history": history_entry}}
+                    )
         await asyncio.sleep(30)
 
 
@@ -150,26 +160,21 @@ async def toggle_notification(client, message):
 @app.on_message(filters.command("history") & filters.private)
 async def show_history(client, message):
     try:
-        data = message.text.split()
-        if len(data) < 2:
-            await message.reply("Usage: `/history <website_url>`")
-            return
-
-        url = data[1]
+        url = message.text.split()[1]
         cursor = collection.find({"chat_id": message.chat.id, "url": url})
-        msg = "📅 Historical Status for {}:\n".format(url)
         async for document in cursor:
-            last_checked = document["last_checked"].strftime('%Y-%m-%d %H:%M:%S')
-            status_icon = "🟢" if document['status'] else "🔴"
-            friendly_name = document['friendly_name']
-            status_text = "up" if document['status'] else "down"
-            
-            link = f'<a href="{document["url"]}">{friendly_name}</a>'
-            msg += f"{status_icon} {link} ({status_text}) (Last checked: {last_checked})\n"
-        
-        await message.reply(msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
+            msg = f"📅 Historical Status for {document['friendly_name']}:\n"
+            for entry in document['history']:
+                timestamp = entry['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+                status_text = "🟢 up" if entry['status'] else "🔴 down"
+                msg += f"{status_text} (Timestamp: {timestamp})\n"
+            await message.reply(msg)
+            return
+        await message.reply("Website not found!")
+    except IndexError:
+        await message.reply("Usage: `/history <website_url>`")
     except Exception as e:
-        await message.reply("An error occurred while processing your request.")
+        await message.reply(f"An error occurred while fetching history: {str(e)}")
 
 
 # keep_alive function to keep the bot alive
