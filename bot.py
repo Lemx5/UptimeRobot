@@ -157,6 +157,10 @@ async def keep_alive():
                 await asyncio.sleep(10)  # Try every 10 seconds until successful
             await asyncio.sleep(600)  # Wait 10 minutes before the next keep-alive attempt
 
+@web_app.route("/", methods=["GET"])            
+async def home():
+    return "<h1>Uptime Monitoring Bot is up and running!</h1>"
+
 @web_app.route("/status", methods=["GET"])
 async def bot_status():
     return jsonify({"status": "Alive", "timestamp": datetime.datetime.utcnow().isoformat()})
