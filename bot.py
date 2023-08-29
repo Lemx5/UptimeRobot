@@ -168,13 +168,14 @@ async def show_history(client, message):
                 timestamp = entry['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
                 status_text = "🟢 up" if entry['status'] else "🔴 down"
                 msg += f"{status_text} (Timestamp: {timestamp})\n"
-            await message.reply(msg)
+            await app.send_message(message.chat.id, msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
             return
-        await message.reply("Website not found!")
+        await app.send_message(message.chat.id, "Website not found!")
     except IndexError:
-        await message.reply("Usage: `/history <website_url>`")
+        await app.send_message(message.chat.id, "Usage: `/history <website_url>`")
     except Exception as e:
-        await message.reply(f"An error occurred while fetching history: {str(e)}")
+        await app.send_message(message.chat.id, f"An error occurred while fetching history: {str(e)}")
+
 
 
 # keep_alive function to keep the bot alive
