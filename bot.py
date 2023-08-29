@@ -94,7 +94,9 @@ async def add_website(client, message):
             "notify_up": False,
             "last_checked": datetime.datetime.utcnow()
         })
-        await message.reply(f"Added {friendly_name} ({url}) to monitoring list with interval {interval//60} minutes.")
+
+        link = f'<a href="{url}">{friendly_name}</a>'
+        await message.reply(f"Added {link} to monitoring list with interval {interval//60} minutes.", parse_mode="html")
     except Exception as e:
         await message.reply("Usage: `/add <website_url> <interval_in_minutes> <friendly_name>`\n\n" + str(e))
 
@@ -110,8 +112,15 @@ async def show_status(client, message):
     msg = "🌐 Websites Status:\n"
     async for document in cursor:
         last_checked = document["last_checked"].strftime('%Y-%m-%d %H:%M:%S')
-        msg += f"{document['friendly_name']} ({document['url']}) is {'🟢 up' if document['status'] else '🔴 down'} (Last checked: {last_checked})\n"
-    await message.reply(msg)
+        status_icon = "🟢" if document['status'] else "🔴"
+        friendly_name = document['friendly_name']
+        status_text = "up" if document['status'] else "down"
+
+        link = f'<a href="{document["url"]}">{friendly_name}</a>'
+        msg += f"{status_icon} {link} ({status_text}) (Last checked: {last_checked})\n"
+
+    await message.reply(msg, parse_mode="html")
+
 
 @app.on_message(filters.command("notify") & filters.private)
 async def toggle_notification(client, message):
@@ -126,14 +135,30 @@ async def toggle_notification(client, message):
 
 # Historical data command
 @app.on_message(filters.command("history") & filters.private)
+@app.on_message(filters.command("history") & filters.private)
 async def show_history(client, message):
-    url = message.text.split()[1]
-    cursor = collection.find({"chat_id": message.chat.id, "url": url})
-    msg = "📅 Historical Status for {}:\n".format(url)
-    async for document in cursor:
-        last_checked = document["last_checked"].strftime('%Y-%m-%d %H:%M:%S')
-        msg += f"{document['friendly_name']} ({document['url']}): {'🟢 up' if document['status'] else '🔴 down'} (Last checked: {last_checked})\n"
-    await message.reply(msg)
+    try:
+        data = message.text.split()
+        if len(data) < 2:
+            await message.reply("Usage: `/history <website_url>`")
+            return
+
+        url = data[1]
+        cursor = collection.find({"chat_id": message.chat.id, "url": url})
+        msg = "📅 Historical Status for {}:\n".format(url)
+        async for document in cursor:
+            last_checked = document["last_checked"].strftime('%Y-%m-%d %H:%M:%S')
+            status_icon = "🟢" if document['status'] else "🔴"
+            friendly_name = document['friendly_name']
+            status_text = "up" if document['status'] else "down"
+            
+            link = f'<a href="{document["url"]}">{friendly_name}</a>'
+            msg += f"{status_icon} {link} ({status_text}) (Last checked: {last_checked})\n"
+        
+        await message.reply(msg, parse_mode="html")
+    except Exception as e:
+        await message.reply("An error occurred while processing your request.")
+
 
 # Send downtime notification
 async def send_downtime_notification(chat_id, friendly_name, url):
