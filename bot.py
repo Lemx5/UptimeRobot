@@ -96,7 +96,7 @@ async def add_website(client, message):
         })
 
         link = f'<a href="{url}">{friendly_name}</a>'
-        await message.reply(f"Added {link} to monitoring list with interval {interval//60} minutes.", parse_mode="html")
+        await message.reply(f"Added {link} to monitoring list with interval {interval//60} minutes.", parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
     except Exception as e:
         await message.reply("Usage: `/add <website_url> <interval_in_minutes> <friendly_name>`\n\n" + str(e))
 
@@ -119,7 +119,7 @@ async def show_status(client, message):
         link = f'[{friendly_name}]({document["url"]})'
         msg += f"{status_icon} {link} ({status_text}) (Last checked: {last_checked})\n"
     
-    await message.reply(msg, parse_mode = enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
+    await message.reply(msg, parse_mode=enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
 
 
 
