@@ -3,7 +3,7 @@ import asyncio
 import aiohttp
 from motor.motor_asyncio import AsyncIOMotorClient
 from pyrogram import Client, filters, enums
-from quart import Quart, jsonify, request
+from quart import Quart, jsonify
 import os
 
 # Configuration
