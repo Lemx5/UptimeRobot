@@ -66,7 +66,8 @@ async def help_command(client, message):
         "/add <website_url> <interval_in_minutes> <friendly_name> - Add a website to the monitoring list.\n"
         "/remove <website_url> - Remove a website from the monitoring list.\n"
         "/status - Show the status of all monitored websites.\n"
-        "/notify <website_url> - Toggle notifications for when a website is up."
+        "/notify <website_url> - Toggle notifications for when a website is up.\n"
+        "/history <website_url> - Show historical status data for a website."
     )
 
 @app.on_message(filters.command("add") & filters.private)
@@ -123,6 +124,24 @@ async def toggle_notification(client, message):
     else:
         await message.reply("Website not found!")
 
+# Historical data command
+@app.on_message(filters.command("history") & filters.private)
+async def show_history(client, message):
+    url = message.text.split()[1]
+    cursor = collection.find({"chat_id": message.chat.id, "url": url})
+    msg = "📅 Historical Status for {}:\n".format(url)
+    async for document in cursor:
+        last_checked = document["last_checked"].strftime('%Y-%m-%d %H:%M:%S')
+        msg += f"{document['friendly_name']} ({document['url']}): {'🟢 up' if document['status'] else '🔴 down'} (Last checked: {last_checked})\n"
+    await message.reply(msg)
+
+# Send downtime notification
+async def send_downtime_notification(chat_id, friendly_name, url):
+    msg = f"🚨 {friendly_name} ({url}) is back up! 🚨"
+    await app.send_message(chat_id, msg)
+
+
+# keep_alive function to keep the bot alive
 async def keep_alive():
     while True:
         async with aiohttp.ClientSession() as session:
@@ -145,6 +164,7 @@ async def bot_status():
 def run_web_app():
     web_app.run(host="0.0.0.0", port=5000)
 
+# Start the bot and web app
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.create_task(monitor_websites())
