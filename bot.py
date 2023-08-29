@@ -40,14 +40,17 @@ async def monitor_websites():
         async for document in cursor:
             if (datetime.datetime.utcnow() - document["last_checked"]).total_seconds() >= document["interval"]:
                 status = await check_website(document["url"])
-                if status != document["status"] or (status and document["notify_up"]):
-                    msg = f"🚨 {document['friendly_name']} ({document['url']}) is {'up' if status else 'down'} 🚨"
-                    await app.send_message(document["chat_id"], msg)
+                if status != document["status"]:
+                    status_text = "down" if status else "up"
+                    friendly_name = f'<a href="{document["url"]}">{document["friendly_name"]}</a>'
+                    msg = f"🚨 {friendly_name} is {status_text} 🚨"
+                    await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
                         {"$set": {"status": status, "last_checked": datetime.datetime.utcnow()}}
                     )
         await asyncio.sleep(30)
+
 
 @app.on_message(filters.command("start") & filters.private)
 async def start_command(client, message):
@@ -167,12 +170,6 @@ async def show_history(client, message):
         await message.reply(msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
     except Exception as e:
         await message.reply("An error occurred while processing your request.")
-
-
-# Send downtime notification
-async def send_downtime_notification(chat_id, friendly_name, url):
-    msg = f"🚨 {friendly_name} ({url}) is back up! 🚨"
-    await app.send_message(chat_id, msg)
 
 
 # keep_alive function to keep the bot alive
