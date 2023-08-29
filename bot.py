@@ -34,6 +34,7 @@ async def check_website(url):
         except:
             return False
 
+# Update the monitor_websites function to add history to the database
 async def monitor_websites():
     while True:
         cursor = collection.find({})
@@ -44,7 +45,7 @@ async def monitor_websites():
                     status_text = "down" if status else "up"
                     friendly_name = f'<a href="{document["url"]}">{document["friendly_name"]}</a>'
                     msg = f"🚨 {friendly_name} is {status_text} 🚨"
-                    await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
+                    await app.send_message(document["chat_id"], msg, parse_mode="html")
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
                         {"$set": {"status": status, "last_checked": datetime.datetime.utcnow()}}
@@ -57,7 +58,7 @@ async def monitor_websites():
                     }
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
-                        {"$push": {"history": history_entry}}
+                        {"$push": {"history": history_entry}}  # Ensure that "history" is the correct attribute name
                     )
         await asyncio.sleep(30)
 
@@ -105,8 +106,9 @@ async def add_website(client, message):
             "interval": interval,
             "friendly_name": friendly_name,
             "notify_up": False,
-            "last_checked": datetime.datetime.utcnow()
-        })
+            "last_checked": datetime.datetime.utcnow(),
+            "history": []  # Initialize the history attribute as an empty list
+            })
 
         link = f'<a href="{url}">{friendly_name}</a>'
         await message.reply(f"Added {link} to monitoring list with interval {interval//60} minutes.", parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
