@@ -134,7 +134,7 @@ async def remove_website(client, message):
 @app.on_message(filters.command("status") & filters.private)
 async def show_status(client, message):
     cursor = collection.find({"chat_id": message.chat.id})
-    msg = f"<b>🌐 Websites Status:</b>\n"
+    msg = f"🌐 Websites Status:\n"
     async for document in cursor:
         last_checked = document["last_checked"].strftime('%Y-%m-%d %H:%M:%S')
         status_icon = "🟢" if document['status'] else "🔴"
