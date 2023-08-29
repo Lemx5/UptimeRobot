@@ -58,7 +58,7 @@ async def monitor_websites():
                     }
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
-                        {"$push": {"history": history_entry}}  # Ensure that "history" is the correct attribute name
+                        {"$set": {"history": history_entry}}  # Ensure that "history" is the correct attribute name
                     )
         await asyncio.sleep(30)
 
@@ -134,7 +134,7 @@ async def remove_website(client, message):
 @app.on_message(filters.command("status") & filters.private)
 async def show_status(client, message):
     cursor = collection.find({"chat_id": message.chat.id})
-    msg = f"🌐 Websites Status:\n"
+    msg = f"🌐 Websites Status:\n\n"
     async for document in cursor:
         last_checked = document["last_checked"].strftime('%Y-%m-%d %H:%M:%S')
         status_icon = "🟢" if document['status'] else "🔴"
