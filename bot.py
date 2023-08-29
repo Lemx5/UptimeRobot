@@ -165,8 +165,9 @@ async def home():
 async def bot_status():
     return jsonify({"status": "Alive", "timestamp": datetime.datetime.utcnow().isoformat()})
 
-def run_web_app():
-    web_app.run(host="0.0.0.0", port=8080)
+async def run_web_app():
+    await web_app.run_task(host="0.0.0.0", port=8080)
+
 
 # Start the bot and web app
 if __name__ == "__main__":
