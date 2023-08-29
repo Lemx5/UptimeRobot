@@ -121,8 +121,7 @@ async def show_status(client, message):
     
     await message.reply(msg, parse_mode=enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
 
-
-
+# Toggle notifications command
 @app.on_message(filters.command("notify") & filters.private)
 async def toggle_notification(client, message):
     url = message.text.split()[1]
