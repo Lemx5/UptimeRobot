@@ -101,7 +101,7 @@ async def add_website(client, message):
         link = f'<a href="{url}">{friendly_name}</a>'
         await message.reply(f"Added {link} to monitoring list with interval {interval//60} minutes.", parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
     except Exception as e:
-        await message.reply("Usage: `/add <website_url> <interval_in_minutes> <friendly_name>`\n\n" + str(e))
+        await message.reply(f"Usage: <code>/add <website_url> <interval_in_minutes> <friendly_name></code>\n\n" + str(e))
 
 @app.on_message(filters.command("remove") & filters.private)
 async def remove_website(client, message):
