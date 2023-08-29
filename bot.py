@@ -45,7 +45,7 @@ async def monitor_websites():
                     status_text = "down" if status else "up"
                     friendly_name = f'<a href="{document["url"]}">{document["friendly_name"]}</a>'
                     msg = f"🚨 {friendly_name} is {status_text} 🚨"
-                    await app.send_message(document["chat_id"], msg, parse_mode="html")
+                    await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
                         {"$set": {"status": status, "last_checked": datetime.datetime.utcnow()}}
