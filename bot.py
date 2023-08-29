@@ -135,7 +135,6 @@ async def toggle_notification(client, message):
 
 # Historical data command
 @app.on_message(filters.command("history") & filters.private)
-@app.on_message(filters.command("history") & filters.private)
 async def show_history(client, message):
     try:
         data = message.text.split()
@@ -155,7 +154,7 @@ async def show_history(client, message):
             link = f'<a href="{document["url"]}">{friendly_name}</a>'
             msg += f"{status_icon} {link} ({status_text}) (Last checked: {last_checked})\n"
         
-        await message.reply(msg, parse_mode="html")
+        await message.reply(msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
     except Exception as e:
         await message.reply("An error occurred while processing your request.")
 
