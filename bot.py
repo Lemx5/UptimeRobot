@@ -102,9 +102,19 @@ async def add_website(client, message):
 
 @app.on_message(filters.command("remove") & filters.private)
 async def remove_website(client, message):
-    url = message.text.split()[1]
-    await collection.delete_one({"url": url, "chat_id": message.chat.id})
-    await message.reply(f"Removed {url} from monitoring list.")
+    try:
+        url = message.text.split()[1]
+        result = await collection.delete_one({"url": url, "chat_id": message.chat.id})
+
+        if result.deleted_count == 1:
+            await message.reply(f"Removed {url} from monitoring list.")
+        else:
+            await message.reply(f"Could not find website with URL: {url}")
+    except IndexError:
+        await message.reply("Usage: `/remove <website_url>`")
+    except Exception as e:
+        await message.reply(f"An error occurred while removing the website: {str(e)}")
+
 
 @app.on_message(filters.command("status") & filters.private)
 async def show_status(client, message):
