@@ -172,7 +172,7 @@ async def show_history(client, message):
             return
         await app.send_message(message.chat.id, "Website not found!")
     except IndexError:
-        await app.send_message(message.chat.id, "Usage: `/history <website_url>`")
+        await app.send_message(message.chat.id, "Usage: <code>/history website_url</code>")
     except Exception as e:
         await app.send_message(message.chat.id, f"An error occurred while fetching history: {str(e)}")
 
