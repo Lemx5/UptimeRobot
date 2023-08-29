@@ -119,7 +119,7 @@ async def show_status(client, message):
         link = f'[{friendly_name}]({document["url"]})'
         msg += f"{status_icon} {link} ({status_text}) (Last checked: {last_checked})\n"
     
-    await message.reply(msg, parse_mode = enums.ParseMode.MARKDOWN)
+    await message.reply(msg, parse_mode = enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
 
 
 
