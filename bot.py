@@ -41,14 +41,13 @@ async def check_website(url):
         except:
             return False
 
-# Update the monitor_websites function to add history to the database
 # Update the monitor_websites function to send requests according to the interval
 async def monitor_websites():
     while True:
         cursor = collection.find({})
         async for document in cursor:
             current_time = datetime.datetime.now(tz=kolkata_timezone)
-            current_time_aware = kolkata_timezone.localize(current_time)  # Make current_time timezone-aware
+            current_time_aware = current_time.replace(tzinfo=kolkata_timezone)  # Make current_time timezone-aware
             if (current_time_aware - document["last_checked"]).total_seconds() >= document["interval"]:
                 status = await check_website(document["url"])
                 if status != document["status"]:
@@ -60,11 +59,12 @@ async def monitor_websites():
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
                         {"$set": {"status": status, "last_checked": current_time_aware}}
-                    )                
+                    )
                 # Ping the website based on the interval
                 await check_website(document["url"])  # Send a request to the website
                 
             await asyncio.sleep(30)  # Sleep for 30 seconds before the next iteration
+
 
 # Start command
 @app.on_message(filters.command("start") & filters.private)
