@@ -1,6 +1,10 @@
+# For Bot Client
 pyrogram
 TgCrypto
+# For Database
 motor
+# For Web Server & Web Request
 aiohttp
 quart
+# For TimeZone
 pytz

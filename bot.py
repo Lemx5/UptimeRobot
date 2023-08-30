@@ -17,6 +17,7 @@ COLLECTION_NAME = os.getenv("COLLECTION_NAME", "websites")
 MAX_WEBSITES_PER_USER = int(os.getenv("MAX_WEBSITES_PER_USER", 10))
 APP_URL = os.getenv("APP_URL")
 ADMINS = [int(admin_id) for admin_id in os.getenv("ADMINS", "").split(",") if admin_id.isdigit()]
+TIMEZONE = os.getenv("TIMEZONE", "Asia/Kolkata")
 
 # Initialize
 app = Client("uptime_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
@@ -29,7 +30,7 @@ web_app = Quart(__name__)
 
 
 # Kolkata Timezone
-kolkata_timezone = pytz.timezone('Asia/Kolkata')
+timezone = pytz.timezone(TIMEZONE)
 
 # Function to check if a website is up or down
 async def check_website(url):
@@ -45,7 +46,7 @@ async def monitor_websites():
     while True:
         cursor = collection.find({})
         async for document in cursor:
-            current_time = datetime.datetime.now(tz=kolkata_timezone)
+            current_time = datetime.datetime.now(tz=timezone)
             if (current_time - document["last_checked"]).total_seconds() >= document["interval"]:
                 status = await check_website(document["url"])
                 if status != document["status"]:
