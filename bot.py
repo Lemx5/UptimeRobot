@@ -1,4 +1,5 @@
 import datetime
+import pytz
 import asyncio
 import aiohttp
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -26,6 +27,11 @@ collection = db[COLLECTION_NAME]
 # Quart app initialization
 web_app = Quart(__name__)
 
+
+# Kolkata Timezone
+kolkata_timezone = pytz.timezone('Asia/Kolkata')
+
+# Function to check if a website is up or down
 async def check_website(url):
     async with aiohttp.ClientSession() as session:
         try:
@@ -39,30 +45,22 @@ async def monitor_websites():
     while True:
         cursor = collection.find({})
         async for document in cursor:
-            if (datetime.datetime.utcnow() - document["last_checked"]).total_seconds() >= document["interval"]:
+            current_time = datetime.datetime.now(tz=kolkata_timezone)
+            if (current_time - document["last_checked"]).total_seconds() >= document["interval"]:
                 status = await check_website(document["url"])
                 if status != document["status"]:
                     status_text = "down" if status else "up"
                     friendly_name = f'<a href="{document["url"]}">{document["friendly_name"]}</a>'
-                    msg = f"🚨 {friendly_name} is {status_text} 🚨"
-                    await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
+                    if status_text == "down":
+                        msg = f"🚨 {friendly_name} is {status_text} 🚨"
+                        await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
-                        {"$set": {"status": status, "last_checked": datetime.datetime.utcnow()}}
-                    )
-                    
-                    # Add history to the database
-                    history_entry = {
-                        "timestamp": datetime.datetime.utcnow(),
-                        "status": status
-                    }
-                    await collection.update_one(
-                        {"url": document["url"], "chat_id": document["chat_id"]},
-                        {"$set": {"history": history_entry}}  # Ensure that "history" is the correct attribute name
+                        {"$set": {"status": status, "last_checked": current_time}}
                     )
         await asyncio.sleep(30)
 
-
+# Start command
 @app.on_message(filters.command("start") & filters.private)
 async def start_command(client, message):
     await message.reply(
@@ -71,6 +69,7 @@ async def start_command(client, message):
         "Use /help to see available commands."
     )
 
+# Help command
 @app.on_message(filters.command("help") & filters.private)
 async def help_command(client, message):
     await message.reply(
@@ -84,6 +83,7 @@ async def help_command(client, message):
         "/history <website_url> - Show historical status data for a website."
     )
 
+# Add website command
 @app.on_message(filters.command("add") & filters.private)
 async def add_website(client, message):
     try:
@@ -107,7 +107,6 @@ async def add_website(client, message):
             "friendly_name": friendly_name,
             "notify_up": False,
             "last_checked": datetime.datetime.utcnow(),
-            "history": []  # Initialize the history attribute as an empty list
             })
 
         link = f'<a href="{url}">{friendly_name}</a>'
@@ -115,6 +114,7 @@ async def add_website(client, message):
     except Exception as e:
         await message.reply(f"Usage: <code>/add website_url interval_in_minutes friendly_name</code>\n\n" + str(e))
 
+# Remove website command
 @app.on_message(filters.command("remove") & filters.private)
 async def remove_website(client, message):
     try:
@@ -130,7 +130,7 @@ async def remove_website(client, message):
     except Exception as e:
         await message.reply(f"An error occurred while removing the website: {str(e)}")
 
-
+# Status command
 @app.on_message(filters.command("status") & filters.private)
 async def show_status(client, message):
     cursor = collection.find({"chat_id": message.chat.id})
@@ -158,27 +158,6 @@ async def toggle_notification(client, message):
     else:
         await message.reply("Website not found!")
 
-# Historical data command
-@app.on_message(filters.command("history") & filters.private)
-async def show_history(client, message):
-    try:
-        url = message.text.split()[1]
-        cursor = collection.find({"chat_id": message.chat.id, "url": url})
-        async for document in cursor:
-            msg = f"📅 Historical Status for {document['friendly_name']}:\n"
-            for entry in document['history']:
-                timestamp = entry['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
-                status_text = "🟢 up" if entry['status'] else "🔴 down"
-                msg += f"{status_text} (Timestamp: {timestamp})\n"
-            await app.send_message(message.chat.id, msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
-            return
-        await app.send_message(message.chat.id, "Website not found!")
-    except IndexError:
-        await app.send_message(message.chat.id, "Usage: <code>/history website_url</code>")
-    except Exception as e:
-        await app.send_message(message.chat.id, f"An error occurred while fetching history: {str(e)}")
-
-
 
 # keep_alive function to keep the bot alive
 async def keep_alive():
@@ -187,7 +166,7 @@ async def keep_alive():
             # Keep sending requests until a 200 status is received
             while True:
                 try:
-                    app_url = f"{APP_URL}/status"
+                    app_url = APP_URL
                     async with session.get(app_url) as response:
                         if response.status == 200:
                             break
@@ -196,14 +175,12 @@ async def keep_alive():
                 await asyncio.sleep(10)  # Try every 10 seconds until successful
             await asyncio.sleep(600)  # Wait 10 minutes before the next keep-alive attempt
 
+# Web app routes & home page
 @web_app.route("/", methods=["GET"])            
 async def home():
-    return "<h1>Uptime Monitoring Bot is up and running!</h1>"
-
-@web_app.route("/status", methods=["GET"])
-async def bot_status():
     return jsonify({"status": "Alive", "timestamp": datetime.datetime.utcnow().isoformat()})
 
+# Run the web app
 async def run_web_app():
     await web_app.run_task(host="0.0.0.0", port=8080)
 
