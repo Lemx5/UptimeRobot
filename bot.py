@@ -89,6 +89,18 @@ async def help_command(client, message):
         "/history <website_url> - Show historical status data for a website."
     )
 
+# Update command to update all website statuses
+@app.on_message(filters.command("update") & filters.private)
+async def update_command(client, message):
+    cursor = collection.find({"chat_id": message.chat.id})
+    async for document in cursor:
+        status = await check_website(document["url"])
+        await collection.update_one(
+            {"url": document["url"], "chat_id": document["chat_id"]},
+            {"$set": {"status": status, "last_checked": datetime.datetime.now(tz=kolkata_timezone)}}
+        )
+    await message.reply("All website statuses updated!")
+
 # Add website command
 @app.on_message(filters.command("add") & filters.private)
 async def add_website(client, message):
