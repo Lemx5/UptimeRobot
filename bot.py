@@ -60,11 +60,6 @@ async def monitor_websites():
                         {"url": document["url"], "chat_id": document["chat_id"]},
                         {"$set": {"status": status, "last_checked": current_time_aware}}
                     )
-                    history_entry = {"timestamp": current_time_aware, "status": status}
-                    await collection.update_one(
-                        {"url": document["url"], "chat_id": document["chat_id"]},
-                        {"$push": {"history": history_entry}}
-                    )
         await asyncio.sleep(30)
 
 # Start command
