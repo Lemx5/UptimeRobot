@@ -20,7 +20,7 @@ ADMINS = [int(admin_id) for admin_id in os.getenv("ADMINS", "").split(",") if ad
 TIMEZONE = os.getenv("TIMEZONE", "Asia/Kolkata")
 
 # Initialize
-app = Client("uptime_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("uptimebot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 db_client = AsyncIOMotorClient(DB_URI)
 db = db_client[DB_NAME]
 collection = db[COLLECTION_NAME]
