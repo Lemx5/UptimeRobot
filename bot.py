@@ -30,7 +30,7 @@ web_app = Quart(__name__)
 
 
 # Kolkata Timezone
-timezone = pytz.timezone(TIMEZONE)
+kolkata_timezone = pytz.timezone(TIMEZONE)
 
 # Function to check if a website is up or down
 async def check_website(url):
@@ -46,8 +46,9 @@ async def monitor_websites():
     while True:
         cursor = collection.find({})
         async for document in cursor:
-            current_time = datetime.datetime.now(tz=timezone)
-            if (current_time - document["last_checked"]).total_seconds() >= document["interval"]:
+            current_time = datetime.datetime.now(tz=kolkata_timezone)
+            current_time_aware = kolkata_timezone.localize(current_time)  # Make current_time timezone-aware
+            if (current_time_aware - document["last_checked"]).total_seconds() >= document["interval"]:
                 status = await check_website(document["url"])
                 if status != document["status"]:
                     status_text = "down" if status else "up"
@@ -57,7 +58,12 @@ async def monitor_websites():
                         await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
                     await collection.update_one(
                         {"url": document["url"], "chat_id": document["chat_id"]},
-                        {"$set": {"status": status, "last_checked": current_time}}
+                        {"$set": {"status": status, "last_checked": current_time_aware}}
+                    )
+                    history_entry = {"timestamp": current_time_aware, "status": status}
+                    await collection.update_one(
+                        {"url": document["url"], "chat_id": document["chat_id"]},
+                        {"$push": {"history": history_entry}}
                     )
         await asyncio.sleep(30)
 
