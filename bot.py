@@ -164,18 +164,6 @@ async def show_status(client, message):
     
     await message.reply(msg, parse_mode=enums.ParseMode.MARKDOWN, disable_web_page_preview=True)
 
-# Toggle notifications command
-@app.on_message(filters.command("notify") & filters.private)
-async def toggle_notification(client, message):
-    url = message.text.split()[1]
-    document = await collection.find_one({"url": url, "chat_id": message.chat.id})
-    if document:
-        await collection.update_one({"url": url, "chat_id": message.chat.id}, {"$set": {"notify_up": not document["notify_up"]}})
-        status = "ON" if not document["notify_up"] else "OFF"
-        await message.reply(f"Notifications when {document['friendly_name']} ({url}) is up are now {status}")
-    else:
-        await message.reply("Website not found!")
-
 
 # keep_alive function to keep the bot alive
 async def keep_alive():
@@ -201,7 +189,6 @@ async def home():
 # Run the web app
 async def run_web_app():
     await web_app.run_task(host="0.0.0.0", port=8080)
-
 
 # Start the bot and web app
 if __name__ == "__main__":
