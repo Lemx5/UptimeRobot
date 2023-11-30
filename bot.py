@@ -28,7 +28,6 @@ collection = db[COLLECTION_NAME]
 # Quart app initialization
 web_app = Quart(__name__)
 
-
 # Kolkata Timezone
 kolkata_timezone = pytz.timezone(TIMEZONE)
 
@@ -41,65 +40,25 @@ async def check_website(url):
         except:
             return False
 
-# Update the monitor_websites function to send requests according to the interval
+# Update the monitor_websites function to send requests every 2 minutes
 async def monitor_websites():
     while True:
         cursor = collection.find({})
         async for document in cursor:
             current_time = datetime.datetime.now(tz=kolkata_timezone)
             current_time_aware = current_time.replace(tzinfo=kolkata_timezone)  # Make current_time timezone-aware
-            if (current_time_aware - document["last_checked"]).total_seconds() >= document["interval"]:
-                status = await check_website(document["url"])
-                if status != document["status"]:
-                    status_text = "down" if status else "up"
-                    friendly_name = f'<a href="{document["url"]}">{document["friendly_name"]}</a>'
-                    if status_text == "down":
-                        msg = f"🚨 {friendly_name} is {status_text} 🚨"
-                        await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
-                    await collection.update_one(
-                        {"url": document["url"], "chat_id": document["chat_id"]},
-                        {"$set": {"status": status, "last_checked": current_time_aware}}
-                    )
-                # Ping the website based on the interval
-                await check_website(document["url"])  # Send a request to the website
-                
-            await asyncio.sleep(30)  # Sleep for 30 seconds before the next iteration
-
-
-# Start command
-@app.on_message(filters.command("start") & filters.private)
-async def start_command(client, message):
-    await message.reply(
-        "Welcome to the Uptime Monitoring Bot! 🌐\n\n"
-        "This bot monitors websites and notifies you of their status.\n"
-        "Use /help to see available commands."
-    )
-
-# Help command
-@app.on_message(filters.command("help") & filters.private)
-async def help_command(client, message):
-    await message.reply(
-        "Available Commands:\n\n"
-        "/start - Start the bot and get a brief intro.\n"
-        "/help - View this help message.\n"
-        "/add <website_url> <interval_in_minutes> <friendly_name> - Add a website to the monitoring list.\n"
-        "/remove <website_url> - Remove a website from the monitoring list.\n"
-        "/status - Show the status of all monitored websites.\n"
-        "/notify <website_url> - Toggle notifications for when a website is up.\n"
-        "/history <website_url> - Show historical status data for a website."
-    )
-
-# Update command to update all website statuses
-@app.on_message(filters.command("update") & filters.private)
-async def update_command(client, message):
-    cursor = collection.find({"chat_id": message.chat.id})
-    async for document in cursor:
-        status = await check_website(document["url"])
-        await collection.update_one(
-            {"url": document["url"], "chat_id": document["chat_id"]},
-            {"$set": {"status": status, "last_checked": datetime.datetime.now(tz=kolkata_timezone)}}
-        )
-    await message.reply("All website statuses updated!")
+            status = await check_website(document["url"])
+            if status != document["status"]:
+                status_text = "down" if status else "up"
+                friendly_name = f'<a href="{document["url"]}">{document["friendly_name"]}</a>'
+                if status_text == "down":
+                    msg = f"🚨 {friendly_name} is {status_text} 🚨"
+                    await app.send_message(document["chat_id"], msg, parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
+                await collection.update_one(
+                    {"url": document["url"], "chat_id": document["chat_id"]},
+                    {"$set": {"status": status, "last_checked": current_time_aware}}
+                )
+            await asyncio.sleep(120)  # Sleep for 2 minutes before the next iteration
 
 # Add website command
 @app.on_message(filters.command("add") & filters.private)
@@ -107,8 +66,7 @@ async def add_website(client, message):
     try:
         data = message.text.split()
         url = data[1]
-        interval = int(data[2]) * 60
-        friendly_name = ' '.join(data[3:])
+        friendly_name = ' '.join(data[2:])
 
         user_websites = await collection.count_documents({"chat_id": message.chat.id})
 
@@ -121,17 +79,17 @@ async def add_website(client, message):
             "url": url,
             "status": status,
             "chat_id": message.chat.id,
-            "interval": interval,
             "friendly_name": friendly_name,
             "notify_up": False,
             "last_checked": datetime.datetime.utcnow(),
             })
 
         link = f'<a href="{url}">{friendly_name}</a>'
-        await message.reply(f"Added {link} to monitoring list with interval {interval//60} minutes.", parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
+        await message.reply(f"Added {link} to monitoring list.", parse_mode=enums.ParseMode.HTML, disable_web_page_preview=True)
     except Exception as e:
-        await message.reply(f"Usage: <code>/add website_url interval_in_minutes friendly_name</code>\n\n")
+        await message.reply(f"Usage: <code>/add website_url friendly_name</code>\n\n")
 
+# Rest of the code remains the same
 # Remove website command
 @app.on_message(filters.command("remove") & filters.private)
 async def remove_website(client, message):
